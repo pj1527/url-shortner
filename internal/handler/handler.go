@@ -4,18 +4,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"url-shortener/internal/service"
 	"url-shortener/internal/store"
 )
 
 type Handler struct {
-	Store *store.Store
+	Service *service.Service
 }
 
 func NewHandler(store *store.Store) *Handler {
 	return &Handler{
-		Store: store,
+		Service: service.NewService(store),
 	}
 }
 
@@ -29,7 +28,6 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
-
 	longURL, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -37,16 +35,16 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if _, err := url.ParseRequestURI(string(longURL)); err != nil {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+	shortURL, err := h.Service.GenerateShortURL(scheme, r.Host, string(longURL))
+	if err != nil {
+		http.Error(w, "Error shortening URL", http.StatusInternalServerError)
 		return
 	}
-
-	id := h.Store.SaveURL(string(longURL))
-	shortKey := service.ToBase62(id)
-
-	shortURL := fmt.Sprintf("http://localhost:8080/%s", shortKey)
-	fmt.Fprintf(w, "%s", shortURL)
+	fmt.Fprintf(w, "%s\n", shortURL)
 }
 
 func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
@@ -55,13 +53,10 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Welcome to the URL Shortener API")
 		return
 	}
-
-	id := service.ToInteger(shortKey)
-	longURL, ok := h.Store.GetURL(id)
-	if !ok {
+	longURL, err := h.Service.FetchLongURL(shortKey)
+	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-
 	http.Redirect(w, r, longURL, http.StatusFound)
 }
