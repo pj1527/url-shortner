@@ -41,12 +41,33 @@ The server will start on `http://localhost:8080`.
 
 ## API Reference
 
+### Health Check
+
+Check if the service is running:
+
+```http
+GET /health
+```
+
+**Example using curl:**
+
+```sh
+curl http://localhost:8080/health
+```
+
+**Response**
+```json
+{
+  "status": "UP"
+}
+```
+
 ### Shorten a URL
 
 **Request**
 
 ```http
-POST /shorten
+POST /api/shorten
 Content-Type: application/json
 
 {
@@ -57,7 +78,7 @@ Content-Type: application/json
 **Example using curl:**
 
 ```sh
-curl -X POST http://localhost:8080/shorten \
+curl -X POST http://localhost:8080/api/shorten \
   -H "Content-Type: application/json" \
   -d '{"url":"https://example.com/very/long/url"}'
 ```
@@ -90,21 +111,6 @@ curl -v http://localhost:8080/8M0Kx
 - Location: Original URL (e.g., `https://example.com/very/long/url`)
 
 ## Development
-
-### Project Structure
-
-```
-.
-├── cmd/
-│   └── url-shortener/
-│       └── main.go          # Application entry point
-├── internal/
-│   ├── handler/            # HTTP request handlers
-│   ├── repository/         # Data access layer
-│   └── service/            # Business logic
-└── pkg/
-    └── utils/              # Utility functions
-```
 
 ### Notes
 
