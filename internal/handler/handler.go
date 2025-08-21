@@ -30,7 +30,13 @@ type ErrorResponse struct {
 }
 
 func (h *Handler) RegisterRoutes(router *gin.Engine) {
-	router.POST("/shorten", h.Shorten)
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "UP"})
+	})
+	apiGroup := router.Group("/api")
+	{
+		apiGroup.POST("/shorten", h.Shorten)
+	}
 	router.GET("/:shortKey", h.Redirect)
 }
 
