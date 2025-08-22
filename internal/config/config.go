@@ -22,10 +22,6 @@ func LoadConfig() AppConfig {
 	}
 
 	redisAddr := os.Getenv("REDIS_ADDR")
-	if redisAddr == "" {
-		redisAddr = "localhost:6379"
-	}
-
 	return AppConfig{
 		Port:      port,
 		RedisAddr: redisAddr,

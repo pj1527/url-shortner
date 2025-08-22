@@ -1,20 +1,36 @@
 # URL Shortener
 
-A simple URL shortener service built with Go and Gin web framework.
+A simple, high-performance URL shortener service built with Go and Gin web framework, featuring multiple storage backends and a clean architecture.
 
 ## Features
 
-- Shorten long URLs to short, memorable links
-- Redirect short URLs to their original destination
-- In-memory storage (data is lost on server restart)
-- Simple REST API
+- **URL Shortening**: Convert long URLs to short, memorable links
+- **Automatic Redirection**: Short URLs automatically redirect to their original destination
+- **Multiple Storage Backends**:
+  - In-memory (default, non-persistent)
+  - Redis (persistent, recommended for production)
+- **RESTful API**: Simple and intuitive API endpoints
+- **Health Check**: Built-in health check endpoint
+- **Environment-based Configuration**: Easy configuration through environment variables
+- **Concurrent-safe**: Thread-safe implementation for high concurrency
 
 ## Getting Started
 
 ### Prerequisites
 
 - [Go](https://golang.org/doc/install) 1.16 or higher
-- Git (for cloning the repository)
+- [Git](https://git-scm.com/) (for cloning the repository)
+- (Optional) [Redis](https://redis.io/) (for persistent storage)
+
+### Environment Variables
+
+Create a `.env` file in the `cmd/url-shortener` directory with the following variables:
+
+```
+PORT=8080
+REDIS_ADDR=localhost:6379  # Only required if using Redis
+```
+- (Optional) [Redis](https://redis.io/docs/getting-started/) server if using Redis storage
 
 ### Installation
 
@@ -24,97 +40,78 @@ A simple URL shortener service built with Go and Gin web framework.
    cd url-shortner
    ```
 
-2. Download dependencies:
+2. Install dependencies:
    ```sh
    go mod download
    ```
 
-### Running the Server
+### Running the Application
 
-Start the server with the following command:
-
+#### Using In-Memory Storage (Default)
 ```sh
 go run cmd/url-shortener/main.go
 ```
 
-The server will start on `http://localhost:8080`.
+#### Using Redis Storage
+1. Make sure Redis is running
+2. Set up your `.env` file with Redis configuration
+3. Run the application:
+   ```sh
+   go run cmd/url-shortener/main.go
+   ```
 
-## API Reference
+## API Documentation
 
-### Health Check
-
-Check if the service is running:
-
-```http
-GET /health
-```
-
-**Example using curl:**
-
-```sh
-curl http://localhost:8080/health
-```
-
-**Response**
-```json
-{
-  "status": "UP"
-}
-```
-
-### Shorten a URL
+### 1. Shorten a URL
 
 **Request**
-
-```http
-POST /api/shorten
-Content-Type: application/json
-
-{
-    "url": "https://example.com/very/long/url"
-}
-```
-
-**Example using curl:**
-
-```sh
+```bash
 curl -X POST http://localhost:8080/api/shorten \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://example.com/very/long/url"}'
+  -d '{"url": "https://example.com/very/long/url"}'
 ```
 
 **Response**
-
 ```json
 {
-  "short_url": "http://localhost:8080/8M0Kx"
+  "short_url": "http://localhost:8080/abc123"
 }
 ```
 
-### Redirect to Original URL
+### 2. Redirect to Original URL
 
 **Request**
-
-```http
-GET /:shortKey
+```bash
+curl -L http://localhost:8080/abc123
 ```
 
-**Example using curl:**
+### 3. Health Check
 
-```sh
-curl -v http://localhost:8080/8M0Kx
+**Request**
+```bash
+curl http://localhost:8080/health
 ```
+   
+   **Response**:
+   ```json
+   {
+     "status": "UP"
+   }
+   ```
 
-**Response**
+## Architecture
 
-- Status: 302 Found
-- Location: Original URL (e.g., `https://example.com/very/long/url`)
+The application follows a clean architecture with clear separation of concerns:
 
-## Development
+- **Handler**: HTTP request handling and response formatting
+- **Service**: Business logic and use cases
+- **Repository**: Data access layer with support for multiple storage backends
+- **Config**: Environment configuration management
+- **Utils**: Helper functions and utilities
 
-### Notes
+## Configuration
 
-- This is an in-memory implementation, so all shortened URLs will be lost when the server restarts.
-- The service runs on port 8080 by default.
-- The base URL for shortened links is hardcoded to `http://localhost:8080`.
-
+| Environment Variable | Default | Description |
+|----------------------|---------|-------------|
+| `PORT` | `8080` | Port to run the server on |
+| `REDIS_ADDR` | `localhost:6379` | Redis server address (if using Redis) |
