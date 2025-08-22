@@ -1,22 +1,30 @@
 package main
 
 import (
-	"fmt"
+	"github.com/gin-gonic/gin"
+	"log"
+	"url-shortener/internal/config"
 	"url-shortener/internal/handler"
 	"url-shortener/internal/repository"
 	"url-shortener/internal/service"
-
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	router := gin.Default()
-	repository := repository.NewRepository()
-	service := service.NewService(repository)
+	cfg := config.LoadConfig()
 
+	router := gin.Default()
+
+	repo, err := repository.NewRedisRepository(cfg.RedisAddr)
+	if err != nil {
+		log.Fatalf("Failed to create repository: %v", err)
+	}
+
+	service := service.NewService(repo)
 	h := handler.NewHandler(service)
 	h.RegisterRoutes(router)
 
-	fmt.Println("Server starting on port 8080...")
-	_ = router.Run(":8080")
+	log.Printf("Server starting on port %s...", cfg.Port)
+	if err := router.Run(":" + cfg.Port); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }

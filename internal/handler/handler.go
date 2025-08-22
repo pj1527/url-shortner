@@ -46,7 +46,7 @@ func (h *Handler) Shorten(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 		return
 	}
-	shortKey, err := h.Service.GenerateShortKey(req.URL)
+	shortKey, err := h.Service.GenerateShortKey(c.Request.Context(), req.URL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Internal Server Error"})
 		return
@@ -57,7 +57,7 @@ func (h *Handler) Shorten(c *gin.Context) {
 
 func (h *Handler) Redirect(c *gin.Context) {
 	shortKey := c.Param("shortKey")
-	longURL, err := h.Service.FetchLongURL(shortKey)
+	longURL, err := h.Service.FetchLongURL(c.Request.Context(), shortKey)
 	if err != nil {
 		c.JSON(http.StatusNotFound, ErrorResponse{Error: err.Error()})
 		return
