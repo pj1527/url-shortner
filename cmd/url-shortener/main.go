@@ -14,7 +14,10 @@ func main() {
 
 	router := gin.Default()
 
-	repo, err := repository.NewRedisRepository(cfg.RedisAddr)
+	repo, err := repository.NewRepository(repository.Config{
+		UseRedis:  cfg.RedisAddr != "",
+		RedisAddr: cfg.RedisAddr,
+	})
 	if err != nil {
 		log.Fatalf("Failed to create repository: %v", err)
 	}
